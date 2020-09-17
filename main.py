@@ -4,9 +4,9 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import youtube_dl
 import os
 
+
 def return_music(update, context):
     url = update.message.text
-    cid = update.message.chat_id
 
     try:
         result = ydl.extract_info(
@@ -34,18 +34,41 @@ def return_music(update, context):
 
     except Exception as e:
         print(e)
-        update.message.reply_text(f"Errors were encountered for {url}")
+        update.message.reply_text(f"Errors were encountered for {url}.")
+
+
+def info_cmd(update, context):
+    url = context.args[0]
+
+    try:
+        result = ydl.extract_info(
+            url,
+            download=False
+        )
+
+        # Send the info
+        update.message.reply_text(
+            "Title: {title}"
+            "\nUploader: {uploader}"
+            "\nViews: {view_count}"
+            "\nVideo: {id}".format(**result)
+        )
+    except Exception as e:
+        print(e)
+        update.message.reply_text(f"Errors were encountered for {url}\n"
+                                   "Usage: /info <url>")
 
 
 def help_cmd(update, context):
     update.message.reply_text("Paste in a Youtube URL. Playlists are supported.")
+
 
 def main():
     # TODO: hide this api key
     updater = Updater("136820376:AAFgZ66FHblXImb0m-QyHj5i4gZAQ-5sN_c", use_context=True)
     dp = updater.dispatcher
 
-    # dp.add_handler(CommandHandler("start", start_cmd))
+    dp.add_handler(CommandHandler("info", info_cmd, pass_args=True))
     dp.add_handler(CommandHandler("help", help_cmd))
 
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, return_music))
@@ -53,6 +76,7 @@ def main():
     # Start the Bot
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == '__main__':
     ydl_opts = {
