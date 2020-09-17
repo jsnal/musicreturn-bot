@@ -13,28 +13,41 @@ def return_music(update, context):
             url,
             download=True
         )
-        output = f"{os.path.splitext(ydl.prepare_filename(result))[0]}.mp3"
-        update.message.reply_audio(open(output, "rb"))
+
+        # Return all of the audio in a playlist
+        if "entries" in result:
+            for song in result["entries"]:
+                update.message.reply_audio(
+                    open(
+                        f"{os.path.splitext(ydl.prepare_filename(song))[0]}.mp3",
+                        "rb"
+                    )
+                )
+        # Return just the requested song
+        else:
+            update.message.reply_audio(
+                open(
+                    f"{os.path.splitext(ydl.prepare_filename(result))[0]}.mp3",
+                    "rb"
+                )
+            )
+
     except Exception as e:
         print(e)
         update.message.reply_text(f"Errors were encountered for {url}")
-
 
 
 def help_cmd(update, context):
     update.message.reply_text("Paste in a Youtube URL. Playlists are supported.")
 
 def main():
+    # TODO: hide this api key
     updater = Updater("136820376:AAFgZ66FHblXImb0m-QyHj5i4gZAQ-5sN_c", use_context=True)
-
-    # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
-    # on different commands - answer in Telegram
     # dp.add_handler(CommandHandler("start", start_cmd))
     dp.add_handler(CommandHandler("help", help_cmd))
 
-    # on noncommand i.e message - echo the message on Telegram
     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, return_music))
 
     # Start the Bot
@@ -45,7 +58,6 @@ if __name__ == '__main__':
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': 'cache/%(title)s.%(ext)s',
-        'download_archive': 'downloaded_songs.txt',
         'restrictfilenames': True,
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
